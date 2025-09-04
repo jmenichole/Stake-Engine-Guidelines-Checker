@@ -1,0 +1,5 @@
+{
+  "name": "Stake Engine Submission Guideline Checker",
+  "description": "An interactive tool to help game developers check their games against Stake Engine's submission guidelines. Features an interactive checklist, a prohibited term scanner, a game tile asset previewer, and AI-powered clarifications.",
+  "requestFramePermissions": []
+}
