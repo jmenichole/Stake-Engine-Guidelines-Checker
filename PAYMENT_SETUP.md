@@ -1,95 +1,172 @@
 # Payment Integration Guide
 
-This guide explains how to set up Stripe payment collection for the Stake Engine Project Validator.
+This guide explains how to set up Ko-fi payment collection for the Stake Engine Project Validator.
 
-## Quick Setup (5 minutes)
+## Ko-fi Integration (Current Setup - $0 Fees!)
 
-### 1. Create Stripe Account
-- Go to https://stripe.com and sign up
-- Verify your email address
+### Why Ko-fi?
+- **Zero transaction fees** - Keep 100% of your earnings
+- **No monthly costs** - Completely free to use
+- **Simple setup** - No complex integration needed
+- **Instant payments** - Money goes directly to your account
+- **PayPal or Stripe backend** - Ko-fi supports both payment methods
 
-### 2. Get Your API Keys
-- Go to https://dashboard.stripe.com/apikeys
-- Copy your **Publishable key** (starts with `pk_test_` for test mode)
+### Current Configuration
+The app is already configured with: `https://ko-fi.com/jmenichole0`
 
-### 3. Create a Payment Link
-1. Go to https://dashboard.stripe.com/payment-links
-2. Click **"New payment link"**
-3. Configure the product:
-   - **Name**: Stake Engine Validation
-   - **Price**: $3.00
-   - **Currency**: USD
-4. Under **"After payment"**, set:
-   - Success URL: `http://localhost:5173/validator?payment_success=true` (for development)
-   - Or your production URL: `https://yourdomain.com/validator?payment_success=true`
-5. Click **"Create link"**
-6. Copy the payment link (e.g., `https://buy.stripe.com/test_XXXXX`)
+### How It Works
 
-### 4. Configure Environment Variables
+1. **User clicks "Pay $3 on Ko-fi"**
+   - Opens Ko-fi page in new tab
+   - User completes $3 payment
+   
+2. **User returns to app**
+   - Clicks "I've Completed Payment" button
+   - Validator unlocks immediately
+   - Access stored in browser localStorage
 
-Create a `.env.local` file in the project root:
+### Setup Steps (If you want to change the Ko-fi link)
 
-```bash
-# Stripe Configuration
-VITE_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_KEY_HERE
-VITE_STRIPE_PAYMENT_LINK=https://buy.stripe.com/test_YOUR_LINK_HERE
-```
+1. **Create Ko-fi Account**
+   - Go to https://ko-fi.com
+   - Sign up for free account
+   - Set up your payment method (PayPal or Stripe)
 
-### 5. Test the Integration
+2. **Get Your Ko-fi Link**
+   - Your link will be: `https://ko-fi.com/yourusername`
+   - Share this link anywhere
+
+3. **Update Environment Variable**
+   Create `.env.local` file:
+   ```bash
+   VITE_PAYMENT_LINK=https://ko-fi.com/yourusername
+   ```
+
+4. **Set Donation Amount**
+   - In Ko-fi settings, you can set suggested amounts
+   - Set $3 as the default/suggested amount
+   - Or use Ko-fi "Products" to create a $3 item
+
+### Testing
+
+**Test Mode:**
+- Ko-fi doesn't have a test mode
+- Use small amounts (minimum $3) for testing
+- You can refund test payments manually
+
+**Verification:**
 ```bash
 npm run dev
 ```
+- Navigate to `/validator`
+- Click "Pay $3 on Ko-fi"
+- Should open Ko-fi in new tab
+- Complete payment
+- Return and click "I've Completed Payment"
+- Validator should unlock
 
-Navigate to `/validator` and click **"Pay $3 & Start Validation"**. You should be redirected to Stripe's payment page.
+## Alternative Payment Options
 
-## Test Mode
-
-Use these test card numbers in Stripe test mode:
-- **Success**: 4242 4242 4242 4242
-- **Decline**: 4000 0000 0000 0002
-- Use any future expiration date and any 3-digit CVC
-
-## Production Deployment
-
-### 1. Switch to Live Mode
-- Get your live publishable key: https://dashboard.stripe.com/apikeys
-- Create a new payment link in live mode
-- Update your `.env` file with live keys
-
-### 2. Update Success/Cancel URLs
-Make sure your payment link success URL points to your production domain:
+### 1. PayPal.me
+```bash
+VITE_PAYMENT_LINK=https://paypal.me/yourname/3
 ```
-https://yourdomain.com/validator?payment_success=true
+- Simple link-based payments
+- ~3% transaction fee
+- Instant payments
+
+### 2. Stripe Payment Links
+```bash
+VITE_PAYMENT_LINK=https://buy.stripe.com/test_XXXXX
 ```
+- Professional checkout experience
+- ~3% transaction fee
+- Automatic redirect support
 
-### 3. Deploy Environment Variables
-Add these to your hosting platform (Vercel, Netlify, etc.):
-- `VITE_STRIPE_PUBLISHABLE_KEY`
-- `VITE_STRIPE_PAYMENT_LINK`
+### 3. Square Payment Links
+```bash
+VITE_PAYMENT_LINK=https://checkout.square.site/yourlink
+```
+- Good for US-based businesses
+- Competitive fees
+- Clean interface
 
-## How It Works
+### 4. Gumroad
+```bash
+VITE_PAYMENT_LINK=https://gumroad.com/l/yourproduct
+```
+- Sell as a digital product
+- Can deliver via email
+- Good for tracking sales
 
-1. User visits `/validator`
-2. If not paid, they see payment gate with $3 button
-3. Clicking button redirects to Stripe payment page
-4. After successful payment, Stripe redirects back with `?payment_success=true`
-5. App stores payment status in localStorage
-6. User can now upload and validate projects
+## Current Implementation
 
-## Validation Credits
+### Features
+✅ Ko-fi payment link integration  
+✅ Opens payment in new tab  
+✅ Manual confirmation after payment  
+✅ localStorage persistence  
+✅ Clean payment gate UI  
 
-Currently, payment is stored in localStorage per browser. For production, consider:
-- Backend validation of payment status
-- User accounts with credit tracking
-- Webhook integration for real-time payment verification
-- Database to store validation credits
+### User Flow
+1. Visit `/validator`
+2. See payment gate with $3 pricing
+3. Click "Pay $3 on Ko-fi"
+4. Complete payment on Ko-fi (new tab)
+5. Return to validator
+6. Click "I've Completed Payment"
+7. Upload and validate projects
+
+### Limitations
+- Honor system - users self-verify payment
+- No automatic verification
+- No payment tracking/analytics built-in
+- Payment status stored only in browser
+
+## Production Recommendations
+
+For a production system, consider:
+
+1. **Backend Payment Verification**
+   - Set up Ko-fi webhooks
+   - Verify payments server-side
+   - Issue access tokens/codes
+
+2. **User Accounts**
+   - Track validation credits
+   - Payment history
+   - Multi-device access
+
+3. **Analytics**
+   - Track conversion rates
+   - Payment completion rates
+   - Revenue metrics
+
+4. **Automated Access**
+   - Ko-fi API integration
+   - Automatic unlock after verified payment
+   - Email confirmation
+
+## Ko-fi Features to Explore
+
+- **Ko-fi Shop** - Sell validation as a product
+- **Memberships** - Monthly validation subscriptions
+- **Commissions** - Custom validation tiers
+- **Goal Tracking** - Track revenue goals
 
 ## Support
 
-For Stripe-related questions:
-- Docs: https://stripe.com/docs
-- Support: https://support.stripe.com
+- Ko-fi Help: https://help.ko-fi.com
+- Ko-fi Community: https://ko-fi.com/Manage/blog
 
-For implementation questions:
-- Check the `ProjectValidator.tsx` component
-- Review the payment flow in the `handlePayment` function
+## Cost Comparison
+
+| Platform | Transaction Fee | Monthly Fee | Best For |
+|----------|----------------|-------------|----------|
+| **Ko-fi** | **0%** | **$0** | **Small payments, creators** |
+| PayPal | ~3% | $0 | Quick setup |
+| Stripe | ~3% | $0 | Professional |
+| Square | ~3% | $0 | US businesses |
+| Gumroad | 10% | $0 | Digital products |
+
+**Ko-fi is the most cost-effective option for $3 validation payments!**

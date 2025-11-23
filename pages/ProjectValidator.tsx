@@ -44,15 +44,12 @@ const ProjectValidator: React.FC = () => {
   }, []);
 
   const handlePayment = useCallback(() => {
-    const paymentLink = (import.meta as any).env.VITE_STRIPE_PAYMENT_LINK;
-    if (paymentLink && paymentLink !== 'https://buy.stripe.com/test_YOUR_LINK_HERE') {
-      // Add success redirect URL to payment link
-      const successUrl = `${window.location.origin}/validator?payment_success=true`;
-      const cancelUrl = `${window.location.origin}/validator`;
-      window.location.href = `${paymentLink}?success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`;
-    } else {
-      setShowPaymentInfo(true);
-    }
+    const paymentLink = (import.meta as any).env.VITE_PAYMENT_LINK || 'https://ko-fi.com/jmenichole0';
+    // For Ko-fi, just redirect to the Ko-fi page
+    // User will pay there and manually return to the app
+    window.open(paymentLink, '_blank');
+    // Show instructions after opening payment link
+    setShowPaymentInfo(true);
   }, []);
 
   const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -265,18 +262,32 @@ const ProjectValidator: React.FC = () => {
 
             <button
               onClick={handlePayment}
-              className="inline-flex items-center px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white text-lg font-medium rounded-lg shadow-lg transition-colors"
+              className="inline-flex items-center px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white text-lg font-medium rounded-lg shadow-lg transition-colors mb-4"
             >
               <Icon name="check" className="w-6 h-6 mr-2" />
-              Pay $3 & Start Validation
+              Pay $3 on Ko-fi
             </button>
 
             {showPaymentInfo && (
-              <div className="mt-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 max-w-2xl mx-auto">
-                <p className="text-yellow-300 text-sm">
-                  <strong>Setup Required:</strong> Please configure your Stripe payment link in the
-                  .env file. See .env.example for instructions.
+              <div className="mt-6 bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-6 max-w-2xl mx-auto">
+                <p className="text-cyan-100 text-base mb-4">
+                  <strong>After paying on Ko-fi:</strong>
                 </p>
+                <ol className="text-cyan-200 text-sm mb-4 text-left list-decimal list-inside space-y-2">
+                  <li>Complete your $3 payment on Ko-fi</li>
+                  <li>Return to this page</li>
+                  <li>Click the button below to unlock the validator</li>
+                </ol>
+                <button
+                  onClick={() => {
+                    setHasPaid(true);
+                    localStorage.setItem('validation_paid', 'true');
+                  }}
+                  className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-lg transition-colors"
+                >
+                  <Icon name="check" className="w-5 h-5 mr-2" />
+                  I've Completed Payment
+                </button>
               </div>
             )}
           </div>
