@@ -8,6 +8,9 @@
 import { GoogleGenAI } from "@google/genai";
 import { GUIDELINE_SECTIONS } from '../constants/guidelines';
 
+// SECURITY WARNING: API key is currently exposed in client-side code
+// TODO: Move this to a backend API proxy to protect the API key
+// See .env.example for recommended implementation approach
 const API_KEY = process.env.API_KEY;
 
 if (!API_KEY) {

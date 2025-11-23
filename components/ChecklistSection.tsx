@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { GuidelineSection } from '../types';
 import ChecklistItemComponent from './ChecklistItem';
 import { getGuidelineClarification } from '../services/geminiService';
@@ -65,7 +66,7 @@ const ChecklistSection: React.FC<ChecklistSectionProps> = ({ section, checkedIte
       {error && <div className="bg-red-500/10 text-red-400 p-3 rounded-md mb-4">{error}</div>}
       {clarification && (
         <div className="bg-gray-700/50 p-4 rounded-md mb-4 prose prose-invert prose-sm max-w-none text-gray-300">
-           <p dangerouslySetInnerHTML={{ __html: clarification.replace(/\n/g, '<br />') }} />
+           <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(clarification.replace(/\n/g, '<br />')) }} />
         </div>
       )}
 

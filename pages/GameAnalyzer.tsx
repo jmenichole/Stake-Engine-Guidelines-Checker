@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useCallback, ChangeEvent } from 'react';
+import DOMPurify from 'dompurify';
 import { Icon } from '../components/Icon';
 import { analyzeGameFile } from '../services/geminiService';
 
@@ -114,7 +115,7 @@ const GameAnalyzer: React.FC = () => {
                     <h2 className="text-2xl font-semibold text-white mb-4">Analysis Report</h2>
                     <div
                         className="text-gray-300 space-y-4"
-                        dangerouslySetInnerHTML={{ __html: analysisResult }}
+                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(analysisResult) }}
                     />
                 </div>
             )}

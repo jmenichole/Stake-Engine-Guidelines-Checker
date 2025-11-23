@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { PROHIBITED_TERMS } from '../constants/prohibitedTerms';
 
 const TermChecker: React.FC = () => {
@@ -81,7 +82,7 @@ const TermChecker: React.FC = () => {
             <h3 className="text-xl font-semibold text-white mb-4">Live Preview</h3>
             <div 
                 className="prose prose-invert max-w-none text-gray-300 whitespace-pre-wrap"
-                dangerouslySetInnerHTML={{ __html: analysis.highlightedText || '<p class="text-gray-500">Your text with highlighted terms will appear here...</p>' }} 
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(analysis.highlightedText || '<p class="text-gray-500">Your text with highlighted terms will appear here...</p>') }} 
             />
        </div>
 
