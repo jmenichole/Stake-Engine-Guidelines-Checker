@@ -5,11 +5,16 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ProjectValidator from './ProjectValidator';
 
 describe('ProjectValidator Component', () => {
+  beforeEach(() => {
+    // Clear localStorage before each test
+    localStorage.clear();
+  });
+
   it('renders the title', () => {
     render(<ProjectValidator />);
     expect(screen.getByText('Stake Engine Project Validator')).toBeInTheDocument();
@@ -20,13 +25,16 @@ describe('ProjectValidator Component', () => {
     expect(screen.getByText(/Upload your game project/i)).toBeInTheDocument();
   });
 
-  it('shows file upload button', () => {
+  it('shows payment gate when not paid', () => {
     render(<ProjectValidator />);
-    expect(screen.getByText('Upload project ZIP')).toBeInTheDocument();
+    expect(screen.getByText('Only $3 per validation')).toBeInTheDocument();
+    expect(screen.getByText('Pay $3 & Start Validation')).toBeInTheDocument();
   });
 
-  it('displays file size limit', () => {
+  it('shows upload interface when payment is completed', () => {
+    // Simulate payment completion
+    localStorage.setItem('validation_paid', 'true');
     render(<ProjectValidator />);
-    expect(screen.getByText(/ZIP files only, max 50MB/i)).toBeInTheDocument();
+    expect(screen.getByText('Upload project ZIP')).toBeInTheDocument();
   });
 });

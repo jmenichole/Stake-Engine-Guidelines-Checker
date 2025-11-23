@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import React, { useState, useCallback, ChangeEvent } from 'react';
+import React, { useState, useCallback, ChangeEvent, useEffect } from 'react';
 import JSZip from 'jszip';
 import { Icon } from '../components/Icon';
 import { GUIDELINE_SECTIONS } from '../constants/guidelines';
@@ -24,6 +24,36 @@ const ProjectValidator: React.FC = () => {
   const [isValidating, setIsValidating] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [canDownloadFixed, setCanDownloadFixed] = useState(false);
+  const [hasPaid, setHasPaid] = useState(false);
+  const [showPaymentInfo, setShowPaymentInfo] = useState(false);
+
+  // Check if user has paid (check URL parameter from Stripe redirect)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment_success') === 'true') {
+      setHasPaid(true);
+      // Store in localStorage to persist across page reloads
+      localStorage.setItem('validation_paid', 'true');
+      // Clean up URL
+      window.history.replaceState({}, '', '/validator');
+    } else {
+      // Check if user has previously paid
+      const paid = localStorage.getItem('validation_paid') === 'true';
+      setHasPaid(paid);
+    }
+  }, []);
+
+  const handlePayment = useCallback(() => {
+    const paymentLink = (import.meta as any).env.VITE_STRIPE_PAYMENT_LINK;
+    if (paymentLink && paymentLink !== 'https://buy.stripe.com/test_YOUR_LINK_HERE') {
+      // Add success redirect URL to payment link
+      const successUrl = `${window.location.origin}/validator?payment_success=true`;
+      const cancelUrl = `${window.location.origin}/validator`;
+      window.location.href = `${paymentLink}?success_url=${encodeURIComponent(successUrl)}&cancel_url=${encodeURIComponent(cancelUrl)}`;
+    } else {
+      setShowPaymentInfo(true);
+    }
+  }, []);
 
   const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -199,8 +229,65 @@ const ProjectValidator: React.FC = () => {
         </p>
       </div>
 
-      {/* Upload Section */}
-      <div className="bg-gray-800 rounded-lg p-6 shadow-lg mb-6">
+      {/* Payment Gate */}
+      {!hasPaid && (
+        <div className="bg-gradient-to-br from-cyan-900/30 to-gray-800 border-2 border-cyan-500/50 rounded-lg p-8 mb-6">
+          <div className="text-center">
+            <div className="mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-cyan-500/20 rounded-full mb-4">
+                <Icon name="check" className="w-8 h-8 text-cyan-400" />
+              </div>
+            </div>
+            <h2 className="text-3xl font-bold text-white mb-3">
+              Validate Your Game Project
+            </h2>
+            <p className="text-xl text-cyan-400 mb-2">Only $3 per validation</p>
+            <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
+              Get comprehensive validation against 60+ Stake Engine guidelines, automatic copyright
+              protection, and detailed error reports. Catch issues before submission and protect
+              your intellectual property.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 max-w-3xl mx-auto">
+              <div className="bg-gray-800/50 p-4 rounded-lg">
+                <Icon name="document-search" className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-300">60+ Guideline Checks</p>
+              </div>
+              <div className="bg-gray-800/50 p-4 rounded-lg">
+                <Icon name="check" className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-300">Copyright Protection</p>
+              </div>
+              <div className="bg-gray-800/50 p-4 rounded-lg">
+                <Icon name="sparkles" className="w-8 h-8 text-cyan-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-300">Detailed Reports</p>
+              </div>
+            </div>
+
+            <button
+              onClick={handlePayment}
+              className="inline-flex items-center px-8 py-4 bg-cyan-600 hover:bg-cyan-700 text-white text-lg font-medium rounded-lg shadow-lg transition-colors"
+            >
+              <Icon name="check" className="w-6 h-6 mr-2" />
+              Pay $3 & Start Validation
+            </button>
+
+            {showPaymentInfo && (
+              <div className="mt-6 bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 max-w-2xl mx-auto">
+                <p className="text-yellow-300 text-sm">
+                  <strong>Setup Required:</strong> Please configure your Stripe payment link in the
+                  .env file. See .env.example for instructions.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Validation Interface - Only show if paid */}
+      {hasPaid && (
+        <>
+          {/* Upload Section */}
+          <div className="bg-gray-800 rounded-lg p-6 shadow-lg mb-6">
         <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md">
           <div className="space-y-1 text-center">
             <Icon name="upload" className="mx-auto h-12 w-12 text-gray-500" />
@@ -420,6 +507,8 @@ const ProjectValidator: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

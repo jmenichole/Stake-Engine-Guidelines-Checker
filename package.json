@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.17.0",
+    "@stripe/stripe-js": "^8.5.2",
     "dompurify": "^3.3.0",
     "jszip": "^3.10.1",
     "react": "^19.1.1",
