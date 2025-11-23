@@ -39,6 +39,10 @@ export default [
         process: 'readonly',
         FileReader: 'readonly',
         HTMLInputElement: 'readonly',
+        File: 'readonly',
+        URL: 'readonly',
+        alert: 'readonly',
+        setTimeout: 'readonly',
       },
     },
     settings: {
@@ -53,6 +57,7 @@ export default [
       ...prettierConfig.rules,
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',
+      'react/no-unescaped-entities': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'warn',
       'prettier/prettier': 'warn',
