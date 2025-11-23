@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2025 jmenichole
- * 
+ *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
@@ -8,17 +8,24 @@
 import React, { useState, useCallback, ChangeEvent } from 'react';
 import { Icon } from '../components/Icon';
 
-const ImageUpload: React.FC<{ onUpload: (file: string) => void; title: string; description: string }> = ({ onUpload, title, description }) => {
-  const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        onUpload(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, [onUpload]);
+const ImageUpload: React.FC<{
+  onUpload: (file: string) => void;
+  title: string;
+  description: string;
+}> = ({ onUpload, title, description }) => {
+  const handleFileChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          onUpload(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    },
+    [onUpload]
+  );
 
   return (
     <div className="w-full">
@@ -27,9 +34,19 @@ const ImageUpload: React.FC<{ onUpload: (file: string) => void; title: string; d
         <div className="space-y-1 text-center">
           <Icon name="upload" className="mx-auto h-12 w-12 text-gray-500" />
           <div className="flex text-sm text-gray-500">
-            <label htmlFor={`file-upload-${title}`} className="relative cursor-pointer bg-gray-800 rounded-md font-medium text-cyan-400 hover:text-cyan-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 focus-within:ring-cyan-500">
+            <label
+              htmlFor={`file-upload-${title}`}
+              className="relative cursor-pointer bg-gray-800 rounded-md font-medium text-cyan-400 hover:text-cyan-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-offset-gray-900 focus-within:ring-cyan-500"
+            >
               <span>Upload a file</span>
-              <input id={`file-upload-${title}`} name={`file-upload-${title}`} type="file" className="sr-only" onChange={handleFileChange} accept="image/png, image/jpeg" />
+              <input
+                id={`file-upload-${title}`}
+                name={`file-upload-${title}`}
+                type="file"
+                className="sr-only"
+                onChange={handleFileChange}
+                accept="image/png, image/jpeg"
+              />
             </label>
             <p className="pl-1">or drag and drop</p>
           </div>
@@ -63,33 +80,49 @@ const AssetPreviewer: React.FC = () => {
         <div className="space-y-6">
           <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
             <h3 className="text-xl font-semibold mb-4">Tile Text</h3>
-             <div>
-                <label htmlFor="game-title" className="block text-sm font-medium text-gray-300">Game Title</label>
-                <input
-                    type="text"
-                    id="game-title"
-                    value={gameTitle}
-                    onChange={(e) => setGameTitle(e.target.value.toUpperCase())}
-                    className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
-                />
+            <div>
+              <label htmlFor="game-title" className="block text-sm font-medium text-gray-300">
+                Game Title
+              </label>
+              <input
+                type="text"
+                id="game-title"
+                value={gameTitle}
+                onChange={(e) => setGameTitle(e.target.value.toUpperCase())}
+                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+              />
             </div>
             <div className="mt-4">
-                <label htmlFor="publisher-name" className="block text-sm font-medium text-gray-300">Publisher Name</label>
-                <input
-                    type="text"
-                    id="publisher-name"
-                    value={publisherName}
-                    onChange={(e) => setPublisherName(e.target.value.toUpperCase())}
-                    className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
-                />
+              <label htmlFor="publisher-name" className="block text-sm font-medium text-gray-300">
+                Publisher Name
+              </label>
+              <input
+                type="text"
+                id="publisher-name"
+                value={publisherName}
+                onChange={(e) => setPublisherName(e.target.value.toUpperCase())}
+                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
+              />
             </div>
           </div>
           <div className="bg-gray-800 rounded-lg p-6 shadow-lg">
             <h3 className="text-xl font-semibold mb-4">Image Assets</h3>
             <div className="space-y-4">
-              <ImageUpload onUpload={setBackground} title="Background Image" description="PNG, JPG up to 10MB" />
-              <ImageUpload onUpload={setForeground} title="Foreground Image" description="PNG with transparency" />
-              <ImageUpload onUpload={setLogo} title="Publisher Logo" description="PNG with transparency" />
+              <ImageUpload
+                onUpload={setBackground}
+                title="Background Image"
+                description="PNG, JPG up to 10MB"
+              />
+              <ImageUpload
+                onUpload={setForeground}
+                title="Foreground Image"
+                description="PNG with transparency"
+              />
+              <ImageUpload
+                onUpload={setLogo}
+                title="Publisher Logo"
+                description="PNG with transparency"
+              />
             </div>
           </div>
         </div>
@@ -101,23 +134,36 @@ const AssetPreviewer: React.FC = () => {
             {background ? (
               <img src={background} alt="Background" className="w-full h-full object-cover" />
             ) : (
-                <div className="text-center">
-                    <Icon name="image" className="w-16 h-16 text-gray-600 mx-auto" />
-                    <p>Background</p>
-                </div>
+              <div className="text-center">
+                <Icon name="image" className="w-16 h-16 text-gray-600 mx-auto" />
+                <p>Background</p>
+              </div>
             )}
             {foreground && (
-              <img src={foreground} alt="Foreground" className="absolute w-full h-full object-contain" />
+              <img
+                src={foreground}
+                alt="Foreground"
+                className="absolute w-full h-full object-contain"
+              />
             )}
             <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 to-transparent text-center">
-                <h4 className="text-white text-3xl font-extrabold tracking-wider" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.8)'}}>{gameTitle}</h4>
-                <div className="flex items-center justify-center mt-2">
-                    {logo && <img src={logo} alt="Publisher Logo" className="h-5 w-auto mr-2 object-contain"/>}
-                    <p className="text-gray-300 text-xs font-bold tracking-widest">{publisherName}</p>
-                </div>
+              <h4
+                className="text-white text-3xl font-extrabold tracking-wider"
+                style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
+              >
+                {gameTitle}
+              </h4>
+              <div className="flex items-center justify-center mt-2">
+                {logo && (
+                  <img src={logo} alt="Publisher Logo" className="h-5 w-auto mr-2 object-contain" />
+                )}
+                <p className="text-gray-300 text-xs font-bold tracking-widest">{publisherName}</p>
+              </div>
             </div>
           </div>
-          <p className="text-sm text-gray-500 mt-4">Preview is an approximation of the final tile.</p>
+          <p className="text-sm text-gray-500 mt-4">
+            Preview is an approximation of the final tile.
+          </p>
         </div>
       </div>
     </div>

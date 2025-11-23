@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2025 jmenichole
- * 
+ *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
@@ -17,13 +17,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'dist/',
-        '**/*.config.ts',
-        '**/*.config.js',
-        '**/types.ts',
-      ],
+      exclude: ['node_modules/', 'dist/', '**/*.config.ts', '**/*.config.js', '**/types.ts'],
     },
   },
   resolve: {

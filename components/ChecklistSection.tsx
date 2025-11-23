@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2025 jmenichole
- * 
+ *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
@@ -18,7 +18,11 @@ interface ChecklistSectionProps {
   onToggleItem: (id: string) => void;
 }
 
-const ChecklistSection: React.FC<ChecklistSectionProps> = ({ section, checkedItems, onToggleItem }) => {
+const ChecklistSection: React.FC<ChecklistSectionProps> = ({
+  section,
+  checkedItems,
+  onToggleItem,
+}) => {
   const [isClarifying, setIsClarifying] = useState(false);
   const [clarification, setClarification] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +32,7 @@ const ChecklistSection: React.FC<ChecklistSectionProps> = ({ section, checkedIte
     setClarification(null);
     setError(null);
     try {
-      const sectionText = `${section.title}\n\n${section.items.map(item => `- ${item.text}`).join('\n')}`;
+      const sectionText = `${section.title}\n\n${section.items.map((item) => `- ${item.text}`).join('\n')}`;
       const result = await getGuidelineClarification(sectionText);
       setClarification(result);
     } catch (e) {
@@ -40,7 +44,7 @@ const ChecklistSection: React.FC<ChecklistSectionProps> = ({ section, checkedIte
   }, [section]);
 
   const progress = useMemo(() => {
-    const checkedInSection = section.items.filter(item => checkedItems.has(item.id)).length;
+    const checkedInSection = section.items.filter((item) => checkedItems.has(item.id)).length;
     return section.items.length > 0 ? (checkedInSection / section.items.length) * 100 : 0;
   }, [section.items, checkedItems]);
 
@@ -49,24 +53,33 @@ const ChecklistSection: React.FC<ChecklistSectionProps> = ({ section, checkedIte
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold text-white">{section.title}</h2>
         <button
-            onClick={handleClarify}
-            disabled={isClarifying}
-            className="flex items-center px-3 py-1.5 text-xs font-medium text-cyan-300 bg-cyan-500/10 rounded-md hover:bg-cyan-500/20 transition-colors disabled:opacity-50 disabled:cursor-wait"
+          onClick={handleClarify}
+          disabled={isClarifying}
+          className="flex items-center px-3 py-1.5 text-xs font-medium text-cyan-300 bg-cyan-500/10 rounded-md hover:bg-cyan-500/20 transition-colors disabled:opacity-50 disabled:cursor-wait"
         >
-            <Icon name="sparkles" className="w-4 h-4 mr-2" />
-            {isClarifying ? 'Thinking...' : 'Clarify with AI'}
+          <Icon name="sparkles" className="w-4 h-4 mr-2" />
+          {isClarifying ? 'Thinking...' : 'Clarify with AI'}
         </button>
       </div>
 
       <div className="w-full bg-gray-700 rounded-full h-1.5 mb-4">
-        <div className="bg-cyan-400 h-1.5 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+        <div
+          className="bg-cyan-400 h-1.5 rounded-full transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        ></div>
       </div>
 
-      {isClarifying && <div className="text-center text-gray-400 p-4">Getting clarification...</div>}
+      {isClarifying && (
+        <div className="text-center text-gray-400 p-4">Getting clarification...</div>
+      )}
       {error && <div className="bg-red-500/10 text-red-400 p-3 rounded-md mb-4">{error}</div>}
       {clarification && (
         <div className="bg-gray-700/50 p-4 rounded-md mb-4 prose prose-invert prose-sm max-w-none text-gray-300">
-           <p dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(clarification.replace(/\n/g, '<br />')) }} />
+          <p
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(clarification.replace(/\n/g, '<br />')),
+            }}
+          />
         </div>
       )}
 

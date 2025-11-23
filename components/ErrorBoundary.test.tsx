@@ -1,11 +1,11 @@
 /**
  * Copyright (c) 2025 jmenichole
- * 
+ *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ErrorBoundary from './ErrorBoundary';
 
@@ -53,7 +53,9 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     );
     expect(
-      screen.getByText("We're sorry, but something unexpected happened. Please try refreshing the page.")
+      screen.getByText(
+        "We're sorry, but something unexpected happened. Please try refreshing the page."
+      )
     ).toBeInTheDocument();
   });
 

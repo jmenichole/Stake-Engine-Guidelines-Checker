@@ -1,29 +1,31 @@
 /**
  * Copyright (c) 2025 jmenichole
- * 
+ *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from '@google/genai';
 import { GUIDELINE_SECTIONS } from '../constants/guidelines';
 
 // SECURITY WARNING: API key is currently exposed in client-side code
 // TODO: Move this to a backend API proxy to protect the API key
 // See .env.example for recommended implementation approach
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env['API_KEY'];
 
 if (!API_KEY) {
-  console.warn("API_KEY environment variable not set. AI features will be disabled.");
+  console.warn('API_KEY environment variable not set. AI features will be disabled.');
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY! });
 
 export const getGuidelineClarification = async (guidelineText: string): Promise<string> => {
   if (!API_KEY) {
-    return Promise.resolve("AI features are disabled. Please set the API_KEY environment variable.");
+    return Promise.resolve(
+      'AI features are disabled. Please set the API_KEY environment variable.'
+    );
   }
-  
+
   const prompt = `
     As an expert on game submission guidelines, explain the following rule section to a game developer in simple, actionable terms.
     Focus on what the developer needs to DO to comply. Use bullet points or a short paragraph for clarity.
@@ -41,22 +43,25 @@ export const getGuidelineClarification = async (guidelineText: string): Promise<
       model: 'gemini-2.5-flash',
       contents: prompt,
     });
-    return response.text;
+    return response.text || '';
   } catch (error) {
-    console.error("Error calling Gemini API:", error);
-    throw new Error("Failed to fetch clarification from Gemini API.");
+    console.error('Error calling Gemini API:', error);
+    throw new Error('Failed to fetch clarification from Gemini API.');
   }
 };
 
 export const analyzeGameFile = async (htmlContent: string): Promise<string> => {
-    if (!API_KEY) {
-        return Promise.resolve("AI features are disabled. Please set the API_KEY environment variable.");
-    }
-    const allGuidelines = GUIDELINE_SECTIONS.map(section => 
-        `### ${section.title}\n${section.items.map(item => `- ${item.text} ${item.details ? `(${item.details})` : ''}`).join('\n')}`
-    ).join('\n\n');
+  if (!API_KEY) {
+    return Promise.resolve(
+      'AI features are disabled. Please set the API_KEY environment variable.'
+    );
+  }
+  const allGuidelines = GUIDELINE_SECTIONS.map(
+    (section) =>
+      `### ${section.title}\n${section.items.map((item) => `- ${item.text} ${item.details ? `(${item.details})` : ''}`).join('\n')}`
+  ).join('\n\n');
 
-    const prompt = `
+  const prompt = `
         You are an expert at reviewing web games for compliance with platform guidelines.
         Analyze the following HTML game file against the Stake Engine submission guidelines provided below.
         
@@ -86,14 +91,14 @@ export const analyzeGameFile = async (htmlContent: string): Promise<string> => {
         **Compliance Analysis Report (HTML):**
     `;
 
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-        return response.text;
-    } catch (error) {
-        console.error("Error calling Gemini API:", error);
-        throw new Error("Failed to fetch game analysis from Gemini API.");
-    }
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+    return response.text || '';
+  } catch (error) {
+    console.error('Error calling Gemini API:', error);
+    throw new Error('Failed to fetch game analysis from Gemini API.');
+  }
 };
