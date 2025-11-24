@@ -12,7 +12,7 @@ import ProjectValidator from './ProjectValidator';
 describe('ProjectValidator Component', () => {
   beforeEach(() => {
     // Clear localStorage before each test
-    localStorage.clear();
+    window.localStorage.clear();
   });
 
   it('renders the title', () => {
@@ -28,12 +28,12 @@ describe('ProjectValidator Component', () => {
   it('shows payment gate when not paid', () => {
     render(<ProjectValidator />);
     expect(screen.getByText('Only $3 per validation')).toBeInTheDocument();
-    expect(screen.getByText('Pay $3 & Start Validation')).toBeInTheDocument();
+    expect(screen.getByText('Pay $3 on Ko-fi')).toBeInTheDocument();
   });
 
   it('shows upload interface when payment is completed', () => {
     // Simulate payment completion
-    localStorage.setItem('validation_paid', 'true');
+    window.localStorage.setItem('validation_paid', 'true');
     render(<ProjectValidator />);
     expect(screen.getByText('Upload project ZIP')).toBeInTheDocument();
   });
