@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2025 jmenichole
- * 
+ *
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
@@ -41,16 +41,14 @@ const ChecklistItemComponent: React.FC<ChecklistItemProps> = ({ item, isChecked,
       </div>
       <div className="ml-4 text-sm">
         <span
-          className={`font-medium ${
-            isChecked ? 'text-gray-300 line-through' : 'text-gray-200'
-          }`}
+          className={`font-medium ${isChecked ? 'text-gray-300 line-through' : 'text-gray-200'}`}
         >
           {item.text}
         </span>
         {item.details && (
-          <p className={`mt-1 text-xs ${
-            isChecked ? 'text-gray-500' : 'text-gray-400'
-          }`}>{item.details}</p>
+          <p className={`mt-1 text-xs ${isChecked ? 'text-gray-500' : 'text-gray-400'}`}>
+            {item.details}
+          </p>
         )}
       </div>
     </label>
