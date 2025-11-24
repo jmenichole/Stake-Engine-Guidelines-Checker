@@ -60,6 +60,7 @@ npm run lint:fix
 ### Configuration
 
 ESLint is configured with:
+
 - TypeScript support
 - React and React Hooks rules
 - Prettier integration
@@ -82,6 +83,7 @@ npm run format:check
 ### Configuration
 
 Prettier is configured to:
+
 - Use single quotes
 - Add semicolons
 - Use 2-space indentation
@@ -100,6 +102,7 @@ npm run type-check
 ### Strict Mode Enabled
 
 TypeScript strict mode is enabled with additional checks:
+
 - `strict: true`
 - `noImplicitAny: true`
 - `strictNullChecks: true`

@@ -39,10 +39,13 @@ export default [
         process: 'readonly',
         FileReader: 'readonly',
         HTMLInputElement: 'readonly',
+        HTMLTextAreaElement: 'readonly',
         File: 'readonly',
         URL: 'readonly',
         alert: 'readonly',
         setTimeout: 'readonly',
+        localStorage: 'readonly',
+        URLSearchParams: 'readonly',
       },
     },
     settings: {
@@ -64,6 +67,6 @@ export default [
     },
   },
   {
-    ignores: ['dist', 'node_modules', '*.config.js', '*.config.ts', 'vite.config.ts', 'vitest.config.ts'],
+    ignores: ['dist', 'node_modules', '*.config.js', '*.config.ts', 'vite.config.ts', 'vitest.config.ts', 'add-copyright.js'],
   },
 ];

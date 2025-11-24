@@ -20,6 +20,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage }) => {
 
   const navItems: { id: Page; name: string; icon: React.ReactNode; path: string }[] = [
     {
+      id: 'home',
+      name: 'Home',
+      icon: <Icon name="home" />,
+      path: '/home',
+    },
+    {
       id: 'validator',
       name: 'Project Validator',
       icon: <Icon name="document-search" />,

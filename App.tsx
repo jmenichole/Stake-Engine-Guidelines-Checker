@@ -10,6 +10,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import ErrorBoundary from './components/ErrorBoundary';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
+import Home from './pages/Home';
 import GuidelineChecklist from './pages/GuidelineChecklist';
 import TermChecker from './pages/TermChecker';
 import AssetPreviewer from './pages/AssetPreviewer';
@@ -18,7 +19,7 @@ import ProjectValidator from './pages/ProjectValidator';
 import { Page } from './types';
 
 const App: React.FC = () => {
-  const [activePage, setActivePage] = React.useState<Page>('validator');
+  const [activePage, setActivePage] = React.useState<Page>('home');
 
   return (
     <ErrorBoundary>
@@ -29,7 +30,15 @@ const App: React.FC = () => {
             <Sidebar activePage={activePage} setActivePage={setActivePage} />
             <main className="flex-1 p-6 md:p-8 overflow-y-auto bg-gray-800/50 rounded-tl-xl">
               <Routes>
-                <Route path="/" element={<Navigate to="/validator" replace />} />
+                <Route path="/" element={<Navigate to="/home" replace />} />
+                <Route
+                  path="/home"
+                  element={
+                    <div onClick={() => setActivePage('home')}>
+                      <Home />
+                    </div>
+                  }
+                />
                 <Route
                   path="/validator"
                   element={

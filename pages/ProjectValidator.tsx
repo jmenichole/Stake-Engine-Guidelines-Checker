@@ -44,7 +44,8 @@ const ProjectValidator: React.FC = () => {
   }, []);
 
   const handlePayment = useCallback(() => {
-    const paymentLink = (import.meta as any).env.VITE_PAYMENT_LINK || 'https://ko-fi.com/jmenichole0';
+    const paymentLink =
+      (import.meta as any).env.VITE_PAYMENT_LINK || 'https://ko-fi.com/jmenichole0';
     // For Ko-fi, just redirect to the Ko-fi page
     // User will pay there and manually return to the app
     window.open(paymentLink, '_blank');
@@ -167,7 +168,7 @@ const ProjectValidator: React.FC = () => {
   }, [file]);
 
   const downloadFixedProject = useCallback(async () => {
-    if (!file) return;
+    if (!file || !result) return;
 
     const zip = await JSZip.loadAsync(file);
     const newZip = new JSZip();
@@ -180,6 +181,61 @@ const ProjectValidator: React.FC = () => {
  */
 
 `;
+
+    // Create a validation report file
+    const reportLines = [
+      '# Stake Engine Validation Report',
+      `Generated: ${new Date().toISOString()}`,
+      `Project: ${file.name}`,
+      '',
+      '## Summary',
+      `- Files Scanned: ${result.fileCount}`,
+      `- Errors: ${result.errors.length}`,
+      `- Warnings: ${result.warnings.length}`,
+      `- Prohibited Terms Found: ${result.prohibitedTermsFound.length}`,
+      '',
+    ];
+
+    if (result.errors.length > 0) {
+      reportLines.push('## Errors (Must Fix)');
+      result.errors.forEach((error) => {
+        reportLines.push(`- ${error}`);
+      });
+      reportLines.push('');
+    }
+
+    if (result.warnings.length > 0) {
+      reportLines.push('## Warnings (Recommended Fixes)');
+      result.warnings.forEach((warning) => {
+        reportLines.push(`- ${warning}`);
+      });
+      reportLines.push('');
+    }
+
+    if (result.prohibitedTermsFound.length > 0) {
+      reportLines.push('## Prohibited Terms');
+      result.prohibitedTermsFound.forEach((item) => {
+        reportLines.push(
+          `- ${item.file} (line ${item.line}): "${item.term}" → "${PROHIBITED_TERMS[item.term]}"`
+        );
+      });
+      reportLines.push('');
+    }
+
+    reportLines.push('## Guidelines Checked');
+    GUIDELINE_SECTIONS.forEach((section) => {
+      reportLines.push(`### ${section.title}`);
+      section.items.forEach((item) => {
+        reportLines.push(`- [${item.id}] ${item.text}`);
+        if (item.details) {
+          reportLines.push(`  ${item.details}`);
+        }
+      });
+      reportLines.push('');
+    });
+
+    // Add validation report to the zip
+    newZip.file('VALIDATION_REPORT.md', reportLines.join('\n'));
 
     for (const [filename, zipEntry] of Object.entries(zip.files)) {
       if (zipEntry.dir) {
@@ -194,12 +250,48 @@ const ProjectValidator: React.FC = () => {
         filename.endsWith('.jsx')
       ) {
         let content = await zipEntry.async('text');
+        const flaggedComments: string[] = [];
 
         // Add copyright if missing
         if (!content.includes('Copyright') && !content.includes('©')) {
           content = copyrightHeader + content;
+          flaggedComments.push('Added copyright header');
         }
 
+        // Add flagged comments for prohibited terms
+        const lines = content.split('\n');
+        const newLines: string[] = [];
+        lines.forEach((line) => {
+          newLines.push(line);
+
+          // Check for prohibited terms
+          Object.keys(PROHIBITED_TERMS).forEach((term) => {
+            const regex = new RegExp(`\\b${term}\\b`, 'gi');
+            if (regex.test(line)) {
+              const flagComment = `// ⚠️ FLAGGED: Replace "${term}" with "${PROHIBITED_TERMS[term]}"`;
+              newLines.push(flagComment);
+            }
+          });
+
+          // Check for external resources
+          if (line.includes('http://') || line.includes('https://')) {
+            const externalUrls = line.match(/(https?:\/\/[^\s"']+)/g);
+            if (externalUrls) {
+              externalUrls.forEach((url) => {
+                if (
+                  !url.includes('cdn.stake.com') &&
+                  !url.includes('localhost') &&
+                  !url.includes('127.0.0.1')
+                ) {
+                  const flagComment = `// ⚠️ FLAGGED: External resource detected (XSS policy violation): ${url}`;
+                  newLines.push(flagComment);
+                }
+              });
+            }
+          }
+        });
+
+        content = newLines.join('\n');
         newZip.file(filename, content);
       } else {
         newZip.file(filename, await zipEntry.async('blob'));
@@ -210,10 +302,10 @@ const ProjectValidator: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = file.name.replace('.zip', '_with_copyright.zip');
+    a.download = file.name.replace('.zip', '_validated_with_flags.zip');
     a.click();
     URL.revokeObjectURL(url);
-  }, [file]);
+  }, [file, result]);
 
   return (
     <div>
@@ -235,9 +327,7 @@ const ProjectValidator: React.FC = () => {
                 <Icon name="check" className="w-8 h-8 text-cyan-400" />
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-white mb-3">
-              Validate Your Game Project
-            </h2>
+            <h2 className="text-3xl font-bold text-white mb-3">Validate Your Game Project</h2>
             <p className="text-xl text-cyan-400 mb-2">Only $3 per validation</p>
             <p className="text-gray-300 mb-6 max-w-2xl mx-auto">
               Get comprehensive validation against 60+ Stake Engine guidelines, automatic copyright
@@ -299,226 +389,238 @@ const ProjectValidator: React.FC = () => {
         <>
           {/* Upload Section */}
           <div className="bg-gray-800 rounded-lg p-6 shadow-lg mb-6">
-        <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md">
-          <div className="space-y-1 text-center">
-            <Icon name="upload" className="mx-auto h-12 w-12 text-gray-500" />
-            <div className="flex text-sm text-gray-500">
-              <label
-                htmlFor="file-upload"
-                className="relative cursor-pointer bg-gray-800 rounded-md font-medium text-cyan-400 hover:text-cyan-300"
-              >
-                <span>Upload project ZIP</span>
-                <input
-                  id="file-upload"
-                  name="file-upload"
-                  type="file"
-                  className="sr-only"
-                  onChange={handleFileChange}
-                  accept=".zip"
-                  aria-label="Upload project ZIP file"
-                />
-              </label>
-            </div>
-            <p className="text-xs text-gray-500">ZIP files only, max 50MB</p>
-          </div>
-        </div>
-
-        {file && (
-          <div className="mt-4">
-            <p className="text-center text-gray-300">
-              File loaded: <strong>{file.name}</strong> ({(file.size / 1024 / 1024).toFixed(2)}MB)
-            </p>
-            <div className="mt-4 text-center">
-              <button
-                onClick={validateProject}
-                disabled={isValidating}
-                className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isValidating ? (
-                  <>
-                    <svg
-                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Validating...
-                  </>
-                ) : (
-                  <>
-                    <Icon name="document-search" className="w-5 h-5 mr-2 -ml-1" />
-                    Validate Project
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Results Section */}
-      {result && (
-        <div className="space-y-6">
-          {/* Summary */}
-          <div
-            className={`rounded-lg p-6 ${result.passed ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}
-          >
-            <div className="flex items-center">
-              {result.passed ? (
-                <>
-                  <Icon name="check" className="w-8 h-8 text-green-400 mr-3" />
-                  <div>
-                    <h2 className="text-2xl font-bold text-green-400">Validation Passed!</h2>
-                    <p className="text-gray-300">
-                      Your project meets the basic Stake Engine requirements
-                    </p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="w-8 h-8 text-red-400 mr-3"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+            <div className="flex justify-center px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md">
+              <div className="space-y-1 text-center">
+                <Icon name="upload" className="mx-auto h-12 w-12 text-gray-500" />
+                <div className="flex text-sm text-gray-500">
+                  <label
+                    htmlFor="file-upload"
+                    className="relative cursor-pointer bg-gray-800 rounded-md font-medium text-cyan-400 hover:text-cyan-300"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
+                    <span>Upload project ZIP</span>
+                    <input
+                      id="file-upload"
+                      name="file-upload"
+                      type="file"
+                      className="sr-only"
+                      onChange={handleFileChange}
+                      accept=".zip"
+                      aria-label="Upload project ZIP file"
                     />
-                  </svg>
-                  <div>
-                    <h2 className="text-2xl font-bold text-red-400">Validation Failed</h2>
-                    <p className="text-gray-300">Please fix the errors below before submitting</p>
-                  </div>
-                </>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500">ZIP files only, max 50MB</p>
+              </div>
+            </div>
+
+            {file && (
+              <div className="mt-4">
+                <p className="text-center text-gray-300">
+                  File loaded: <strong>{file.name}</strong> ({(file.size / 1024 / 1024).toFixed(2)}
+                  MB)
+                </p>
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={validateProject}
+                    disabled={isValidating}
+                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isValidating ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Validating...
+                      </>
+                    ) : (
+                      <>
+                        <Icon name="document-search" className="w-5 h-5 mr-2 -ml-1" />
+                        Validate Project
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Results Section */}
+          {result && (
+            <div className="space-y-6">
+              {/* Summary */}
+              <div
+                className={`rounded-lg p-6 ${result.passed ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}
+              >
+                <div className="flex items-center">
+                  {result.passed ? (
+                    <>
+                      <Icon name="check" className="w-8 h-8 text-green-400 mr-3" />
+                      <div>
+                        <h2 className="text-2xl font-bold text-green-400">Validation Passed!</h2>
+                        <p className="text-gray-300">
+                          Your project meets the basic Stake Engine requirements
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <svg
+                        className="w-8 h-8 text-red-400 mr-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                      <div>
+                        <h2 className="text-2xl font-bold text-red-400">Validation Failed</h2>
+                        <p className="text-gray-300">
+                          Please fix the errors below before submitting
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <p className="text-gray-400 text-sm">Files Scanned</p>
+                  <p className="text-2xl font-bold text-white">{result.fileCount}</p>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <p className="text-gray-400 text-sm">Errors</p>
+                  <p className="text-2xl font-bold text-red-400">{result.errors.length}</p>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <p className="text-gray-400 text-sm">Warnings</p>
+                  <p className="text-2xl font-bold text-yellow-400">{result.warnings.length}</p>
+                </div>
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <p className="text-gray-400 text-sm">Prohibited Terms</p>
+                  <p className="text-2xl font-bold text-orange-400">
+                    {result.prohibitedTermsFound.length}
+                  </p>
+                </div>
+              </div>
+
+              {/* Errors */}
+              {result.errors.length > 0 && (
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold text-red-400 mb-4">Errors (Must Fix)</h3>
+                  <ul className="space-y-2">
+                    {result.errors.map((error, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="text-red-400 mr-2">•</span>
+                        <span className="text-gray-300">{error}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
-            </div>
-          </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Files Scanned</p>
-              <p className="text-2xl font-bold text-white">{result.fileCount}</p>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Errors</p>
-              <p className="text-2xl font-bold text-red-400">{result.errors.length}</p>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Warnings</p>
-              <p className="text-2xl font-bold text-yellow-400">{result.warnings.length}</p>
-            </div>
-            <div className="bg-gray-800 rounded-lg p-4">
-              <p className="text-gray-400 text-sm">Prohibited Terms</p>
-              <p className="text-2xl font-bold text-orange-400">
-                {result.prohibitedTermsFound.length}
-              </p>
-            </div>
-          </div>
+              {/* Warnings */}
+              {result.warnings.length > 0 && (
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold text-yellow-400 mb-4">
+                    Warnings (Recommended)
+                  </h3>
+                  <ul className="space-y-2 max-h-60 overflow-y-auto">
+                    {result.warnings.map((warning, idx) => (
+                      <li key={idx} className="flex items-start">
+                        <span className="text-yellow-400 mr-2">•</span>
+                        <span className="text-gray-300">{warning}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-          {/* Errors */}
-          {result.errors.length > 0 && (
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-red-400 mb-4">Errors (Must Fix)</h3>
-              <ul className="space-y-2">
-                {result.errors.map((error, idx) => (
-                  <li key={idx} className="flex items-start">
-                    <span className="text-red-400 mr-2">•</span>
-                    <span className="text-gray-300">{error}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Warnings */}
-          {result.warnings.length > 0 && (
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-yellow-400 mb-4">Warnings (Recommended)</h3>
-              <ul className="space-y-2 max-h-60 overflow-y-auto">
-                {result.warnings.map((warning, idx) => (
-                  <li key={idx} className="flex items-start">
-                    <span className="text-yellow-400 mr-2">•</span>
-                    <span className="text-gray-300">{warning}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Prohibited Terms */}
-          {result.prohibitedTermsFound.length > 0 && (
-            <div className="bg-gray-800 rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-orange-400 mb-4">Prohibited Terms Found</h3>
-              <div className="space-y-2 max-h-60 overflow-y-auto">
-                {result.prohibitedTermsFound.map((item, idx) => (
-                  <div key={idx} className="bg-gray-700/50 p-3 rounded">
-                    <p className="text-gray-300">
-                      <span className="font-mono text-orange-300">{item.file}</span>
-                      <span className="text-gray-500"> (line {item.line})</span>
-                    </p>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Found: <span className="text-orange-400">{item.term}</span> → Replace with:{' '}
-                      <span className="text-green-400">{PROHIBITED_TERMS[item.term]}</span>
-                    </p>
+              {/* Prohibited Terms */}
+              {result.prohibitedTermsFound.length > 0 && (
+                <div className="bg-gray-800 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold text-orange-400 mb-4">
+                    Prohibited Terms Found
+                  </h3>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {result.prohibitedTermsFound.map((item, idx) => (
+                      <div key={idx} className="bg-gray-700/50 p-3 rounded">
+                        <p className="text-gray-300">
+                          <span className="font-mono text-orange-300">{item.file}</span>
+                          <span className="text-gray-500"> (line {item.line})</span>
+                        </p>
+                        <p className="text-sm text-gray-400 mt-1">
+                          Found: <span className="text-orange-400">{item.term}</span> → Replace
+                          with:{' '}
+                          <span className="text-green-400">{PROHIBITED_TERMS[item.term]}</span>
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+              )}
+
+              {/* Download Fixed Version */}
+              {canDownloadFixed && (
+                <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-6">
+                  <h3 className="text-xl font-semibold text-cyan-400 mb-2">
+                    Download Validated Project
+                  </h3>
+                  <p className="text-gray-300 mb-4">
+                    Download your project with copyright headers, flagged comments for issues that
+                    need fixing, and a comprehensive validation report (VALIDATION_REPORT.md). All
+                    prohibited terms and policy violations are marked with ⚠️ FLAGGED comments in
+                    the code.
+                  </p>
+                  <button
+                    onClick={downloadFixedProject}
+                    className="inline-flex items-center px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-md transition-colors"
+                  >
+                    <Icon name="check" className="w-5 h-5 mr-2" />
+                    Download with Flagged Comments
+                  </button>
+                </div>
+              )}
+
+              {/* Guidelines Reference */}
+              <div className="bg-gray-800 rounded-lg p-6">
+                <h3 className="text-xl font-semibold text-white mb-4">
+                  Stake Engine Guidelines Checked
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  {GUIDELINE_SECTIONS.map((section) => (
+                    <div key={section.title} className="bg-gray-700/50 p-3 rounded">
+                      <h4 className="font-semibold text-cyan-400 mb-2">{section.title}</h4>
+                      <p className="text-gray-400">{section.items.length} rules validated</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
-
-          {/* Download Fixed Version */}
-          {canDownloadFixed && (
-            <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-cyan-400 mb-2">Add Copyright Protection</h3>
-              <p className="text-gray-300 mb-4">
-                Download your project with copyright headers automatically added to all code files.
-                This protects your intellectual property.
-              </p>
-              <button
-                onClick={downloadFixedProject}
-                className="inline-flex items-center px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white font-medium rounded-md transition-colors"
-              >
-                <Icon name="check" className="w-5 h-5 mr-2" />
-                Download with Copyright
-              </button>
-            </div>
-          )}
-
-          {/* Guidelines Reference */}
-          <div className="bg-gray-800 rounded-lg p-6">
-            <h3 className="text-xl font-semibold text-white mb-4">
-              Stake Engine Guidelines Checked
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              {GUIDELINE_SECTIONS.map((section) => (
-                <div key={section.title} className="bg-gray-700/50 p-3 rounded">
-                  <h4 className="font-semibold text-cyan-400 mb-2">{section.title}</h4>
-                  <p className="text-gray-400">{section.items.length} rules validated</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
         </>
       )}
     </div>
